@@ -1,5 +1,5 @@
-import React, { Component } from 'react'
-import { StyleSheet, View, Image } from 'react-native'
+import React, { PureComponent } from 'react'
+import { StyleSheet } from 'react-native'
 import {
   Container,
   Header,
@@ -9,17 +9,19 @@ import {
   Button,
   Title,
   H2,
-  H3,
   Text,
   Content,
   Card,
   CardItem,
   Icon,
-  Spinner
+  Spinner,
+  View,
+  Thumbnail
 } from 'native-base'
+import CardListContext, { withCardListConsumer } from '../../context/CardList'
 
 const getCreditCards = async () => {
-  await new Promise((resolve, reject) => setTimeout(resolve, 5000))
+  await new Promise((resolve, reject) => setTimeout(resolve, 0))
 
   return Array.from({ length: 10 }, () => ({
     name: 'Credit card name',
@@ -39,72 +41,75 @@ const getCreditCards = async () => {
   }))
 }
 
-export default class List extends Component {
-  state = {
-    creditCards: [],
-    isLoading: true
-  }
-
-  async componentDidMount() {
-    const creditCards = await getCreditCards()
-    this.setState(() => ({
-      creditCards,
-      isLoading: false
-    }))
-  }
-
-  render() {
-    return (
+const ListComponent = props => (
+  <CardListContext.Consumer>
+    {({ cardList, isLoading }) => (
       <Container>
         <Header transparent>
           <Body>
             <Title style={styles.title}>Credit card tracker</Title>
           </Body>
           <Right>
-            <Button
-              transparent
-              danger
-              onPress={() => this.props.navigation.navigate('AddCard')}
-            >
-              <Icon style={{ fontSize: 28 }} name="funnel" />
+            <Button transparent danger onPress={() => alert('WIP')}>
+              <Icon style={{ fontSize: 26 }} name="funnel" />
             </Button>
-            <Button
-              transparent
-              primary
-              onPress={() => this.props.navigation.navigate('AddCard')}
-            >
-              <Icon style={{ fontSize: 28 }} name="add" />
+            <Button transparent primary onPress={() => alert('WIP')}>
+              <Icon style={{ fontSize: 26 }} name="settings" />
             </Button>
           </Right>
         </Header>
         <Content style={styles.content}>
-          {this.state.isLoading ? (
+          {isLoading ? (
             <Spinner />
-          ) : Array.isArray(this.state.creditCards) &&
-          this.state.creditCards.length > 0 ? (
-            this.state.creditCards.map(
-              ({ name, transactions, digits, type }, index) => (
-                <Card style={styles.creditCard} key={index}>
-                  <CardItem>
-                    <Left>
-                      <H2>{name}</H2>
-                    </Left>
-                  </CardItem>
-                  <CardItem>
-                    <Left>
-                      <H3 style={{ textDecorationLine: 'underline' }}>
-                        Latest paid
-                      </H3>
-                    </Left>
-                    <Right>
-                      <H3 style={{ fontWeight: 'bold' }}>See more</H3>
-                    </Right>
-                  </CardItem>
+          ) : Array.isArray(cardList) && cardList.length > 0 ? (
+            cardList.map(({ name, transactions, digits, type }, index) => (
+              <Card
+                style={{
+                  flexDirection: 'column'
+                }}
+                key={index}
+              >
+                <CardItem>
+                  <Left>
+                    <H2>{name}</H2>
+                  </Left>
+                  <Right>
+                    <Button
+                      onPress={() => alert('WIP')}
+                      danger
+                      style={{
+                        paddingLeft: 15,
+                        paddingRight: 15
+                      }}
+                      transparent
+                    >
+                      <Icon
+                        style={{
+                          fontSize: 32
+                        }}
+                        name="add"
+                      />
+                    </Button>
+                  </Right>
+                </CardItem>
+                <CardItem>
+                  <Left>
+                    <Text
+                      style={{
+                        marginLeft: 0
+                      }}
+                    >
+                      Latest paid
+                    </Text>
+                  </Left>
+                </CardItem>
+                <CardItem style={{ minHeight: 100 }}>
                   {Array.isArray(transactions) && transactions.length > 0 ? (
-                    <CardItem style={{ alignItems: 'flex-start' }}>
+                    <React.Fragment>
                       <Left>
-                        <Image
-                          style={{ height: 75, width: 50 }}
+                        <Thumbnail
+                          square
+                          large
                           source={require('./Placeholder.png')}
                         />
                         <Text>
@@ -120,26 +125,66 @@ export default class List extends Component {
                           name="ios-arrow-forward"
                         />
                       </Right>
-                    </CardItem>
-                  ) : null}
-                  <CardItem style={{ position: 'relative' }}>
-                    <Text style={styles.creditCardType}>
-                      {digits} {type}
-                    </Text>
-                  </CardItem>
-                </Card>
-              )
-            )
+                    </React.Fragment>
+                  ) : (
+                    <Body>
+                      <Button large block transparent>
+                        <Text uppercase={false}>No transaction</Text>
+                      </Button>
+                    </Body>
+                  )}
+                </CardItem>
+                <CardItem>
+                  <Text style={{ fontWeight: 'bold' }}>{digits}</Text>
+                  <Text
+                    style={{
+                      position: 'absolute',
+                      fontWeight: 'bold',
+                      right: 10,
+                      bottom: 5
+                    }}
+                  >
+                    <Icon
+                      style={{ fontSize: 32 }}
+                      type="FontAwesome"
+                      name={`cc-${type}`}
+                    />
+                  </Text>
+                </CardItem>
+              </Card>
+            ))
           ) : (
-            <Text style={{ marginTop: 20, textAlign: 'center' }}>
-              Please add a new card.
-            </Text>
+            <View
+              style={{
+                marginTop: 20,
+                marginBottom: 80,
+                alignItems: 'center'
+              }}
+            >
+              <Text
+                style={{
+                  marginTop: 20,
+                  transform: [{ rotate: '35deg' }]
+                }}
+              >
+                <Icon style={{ fontSize: 48 }} name="card" />
+              </Text>
+              <Text style={{ fontSize: 28 }}>Not found</Text>
+            </View>
           )}
+          <Button
+            block
+            iconLeft
+            onPress={() => props.navigation.navigate('AddCard')}
+            style={{ marginTop: 15 }}
+          >
+            <Text>Add a new card</Text>
+          </Button>
         </Content>
       </Container>
-    )
-  }
-}
+    )}
+  </CardListContext.Consumer>
+)
 
 const styles = StyleSheet.create({
   title: {
@@ -150,15 +195,7 @@ const styles = StyleSheet.create({
   content: {
     paddingLeft: 15,
     paddingRight: 15
-  },
-  creditCard: {
-    minHeight: 220,
-    flexDirection: 'column'
-  },
-  creditCardType: {
-    position: 'absolute',
-    fontWeight: 'bold',
-    right: 5,
-    bottom: 5
   }
 })
+
+export default props => <ListComponent {...props} />

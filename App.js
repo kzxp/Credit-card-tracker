@@ -8,16 +8,20 @@ import React, { Component } from 'react'
 import { Root } from 'native-base'
 import { Platform, StyleSheet } from 'react-native'
 import { createStackNavigator } from 'react-navigation'
+import Login from './screen/Login'
 import CardList from './screen/CardList'
 import AddCard from './screen/AddCard'
+import Firebase from './firebase'
+import { CardListProvider, withCardListConsumer } from './context/CardList'
 
 const AppNavigator = createStackNavigator(
   {
-    Home: { screen: CardList },
+    Login: { screen: Login },
+    CardList: { screen: CardList },
     AddCard: { screen: AddCard }
   },
   {
-    initialRouteName: 'Home',
+    initialRouteName: 'Login',
     navigationOptions: { header: null },
     transitionConfig: () => ({
       screenInterpolator: sceneProps => {
@@ -44,8 +48,24 @@ const AppNavigator = createStackNavigator(
   }
 )
 
-export default () => (
-  <Root>
-    <AppNavigator />
-  </Root>
-)
+const Spy = () => console.warn('Re render') || null
+
+export default () => {
+  const firebaseInstance = new Firebase()
+  const screenProps = {
+    onGoogleLogin: firebaseInstance.googleLogin,
+    onReGoogleLogin: firebaseInstance.reGoogleLogin,
+    isLoggedIn: firebaseInstance.isLoggedIn
+  }
+
+  return (
+    <Root>
+      <CardListProvider>
+        <React.Fragment>
+          <Spy />
+          <AppNavigator screenProps={screenProps} />
+        </React.Fragment>
+      </CardListProvider>
+    </Root>
+  )
+}
